@@ -28,4 +28,10 @@ class Doctor extends Model
     {
         return $this->hasMany(MedicalRecord::class, 'doctor_id', 'doctor_id');
     }
+
+    public function user() : BelongsTo 
+    {
+        return $this->belongsTo(User::class);
+    }
+
 }
