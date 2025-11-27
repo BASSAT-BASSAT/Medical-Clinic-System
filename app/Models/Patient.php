@@ -4,6 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Appointment;
+use App\Models\MedicalRecord;
+use App\Models\User;
 
 class Patient extends Model
 {
@@ -11,7 +15,7 @@ class Patient extends Model
     protected $primaryKey = 'patient_id';
     public $timestamps = true;
 
-    protected $fillable = ['first_name', 'last_name', 'dob', 'phone', 'email'];
+    protected $fillable = ['user_id', 'first_name', 'last_name', 'dob', 'phone', 'email'];
 
     protected $casts = [
         'dob' => 'date',

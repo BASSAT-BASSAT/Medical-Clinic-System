@@ -8,6 +8,23 @@ use Illuminate\Http\Request;
 class PatientController extends Controller
 {
     /**
+     * Display patient dashboard
+     */
+    public function dashboard()
+    {
+        $patientId = auth()->user()->patient->patient_id ?? null;
+        
+        if (!$patientId) {
+            return view('patient.dashboard');
+        }
+        
+        $patient = Patient::with('appointments', 'medicalRecords')
+            ->find($patientId);
+        
+        return view('patient.dashboard', compact('patient'));
+    }
+
+    /**
      * Display a listing of all patients
      */
     public function index()
@@ -90,4 +107,50 @@ class PatientController extends Controller
         $records = $patient->medicalRecords()->with('doctor', 'appointment')->get();
         return response()->json($records);
     }
+
+    /**
+     * Display appointment booking view
+     */
+    public function bookAppointment()
+    {
+        $patientId = auth()->user()->patient->patient_id ?? null;
+        
+        if (!$patientId) {
+            return view('patient.book-appointment');
+        }
+        
+        $patient = Patient::find($patientId);
+        return view('patient.book-appointment', compact('patient'));
+    }
+
+    /**
+     * Display patient's medical records view
+     */
+    public function medicalRecordsView()
+    {
+        $patientId = auth()->user()->patient->patient_id ?? null;
+        
+        if (!$patientId) {
+            return view('patient.records');
+        }
+        
+        $patient = Patient::with('medicalRecords')->find($patientId);
+        return view('patient.records', compact('patient'));
+    }
+
+    /**
+     * Display patient's notifications view
+     */
+    public function notifications()
+    {
+        $patientId = auth()->user()->patient->patient_id ?? null;
+        
+        if (!$patientId) {
+            return view('patient.notifications');
+        }
+        
+        $patient = Patient::find($patientId);
+        return view('patient.notifications', compact('patient'));
+    }
 }
+

@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Doctor;
+use App\Models\Patient;
+use App\Models\Specialty;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,7 +22,8 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
-        return view('auth.register');
+        $specialties = Specialty::all();
+        return view('auth.register', compact('specialties'));
     }
 
     /**
@@ -29,17 +33,43 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+        $validated = $request->validate([
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'role' => ['required', 'in:patient,doctor,admin'],
+            'specialty_id' => ['nullable', 'required_if:role,doctor', 'exists:specialties,specialty_id'],
+            'phone' => ['nullable', 'string', 'max:20'],
         ]);
 
+        // Create user (using first_name and last_name in the name field for compatibility)
         $user = User::create([
-            'name' => $request->name,
+            'name' => $validated['first_name'] . ' ' . $validated['last_name'],
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => $validated['role'],
         ]);
+
+        // Create related record based on role
+        if ($validated['role'] === 'doctor') {
+            Doctor::create([
+                'user_id' => $user->id,
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'specialty_id' => $validated['specialty_id'],
+                'phone' => $validated['phone'],
+                'email' => $request->email,
+            ]);
+        } elseif ($validated['role'] === 'patient') {
+            Patient::create([
+                'user_id' => $user->id,
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'phone' => $validated['phone'],
+                'email' => $request->email,
+            ]);
+        }
 
         event(new Registered($user));
 

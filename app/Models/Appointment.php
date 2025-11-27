@@ -5,6 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Patient;
+use App\Models\Doctor;
+use App\Models\MedicalRecord;
+use App\Models\Notification;
 
 class Appointment extends Model
 {
@@ -14,10 +18,7 @@ class Appointment extends Model
 
     protected $fillable = ['patient_id', 'doctor_id', 'start_time', 'end_time', 'status', 'reason'];
 
-    protected $casts = [
-        'start_time' => 'datetime',
-        'end_time' => 'datetime',
-    ];
+    protected $casts = [];
 
     public function patient(): BelongsTo
     {
@@ -32,5 +33,10 @@ class Appointment extends Model
     public function medicalRecords(): HasMany
     {
         return $this->hasMany(MedicalRecord::class, 'appointment_id', 'appointment_id');
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class, 'appointment_id', 'appointment_id');
     }
 }
