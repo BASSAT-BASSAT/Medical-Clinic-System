@@ -52,6 +52,16 @@ class DoctorAvailabilityController extends Controller
 
         $validated = $validator->validated();
 
+        // Check if end_time is before start_time (indicating next-day shift like 5pm to 1am)
+        // This is a valid scenario for overnight shifts
+        $startSeconds = strtotime('00:00:00 ' . $validated['start_time']) - strtotime('00:00:00');
+        $endSeconds = strtotime('00:00:00 ' . $validated['end_time']) - strtotime('00:00:00');
+        
+        if ($endSeconds < $startSeconds) {
+            // This is an overnight shift - mark it so the slot generation knows to handle it
+            $validated['is_overnight'] = true;
+        }
+
         // Check if availability already exists for this day
         $existing = DoctorAvailability::where('doctor_id', $validated['doctor_id'])
             ->where('day_of_week', $validated['day_of_week'])

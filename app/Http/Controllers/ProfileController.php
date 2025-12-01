@@ -3,6 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Patient;
+use App\Models\Doctor;
+use App\Models\Appointment;
+use App\Models\MedicalRecord;
+use App\Models\Notification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -57,7 +62,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Delete the user's account.
+     * Delete the user's account and all related data.
      */
     public function destroy(Request $request): RedirectResponse
     {
@@ -67,13 +72,55 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        Auth::logout();
+        try {
+            // Delete patient-related data
+            if ($user->patient) {
+                $patient = $user->patient;
+                
+                // Delete appointments first
+                Appointment::where('patient_id', $patient->patient_id)->delete();
+                
+                // Delete medical records
+                MedicalRecord::where('patient_id', $patient->patient_id)->delete();
+                
+                // Delete notifications related to this patient
+                Notification::where('patient_id', $patient->patient_id)->delete();
+                
+                // Delete patient
+                $patient->delete();
+            }
 
-        $user->delete();
+            // Delete doctor-related data
+            if ($user->doctor) {
+                $doctor = $user->doctor;
+                
+                // Delete appointments where this doctor is assigned
+                Appointment::where('doctor_id', $doctor->doctor_id)->delete();
+                
+                // Delete availability records
+                $doctor->availability()->delete();
+                
+                // Delete notifications related to this doctor
+                Notification::where('doctor_id', $doctor->doctor_id)->delete();
+                
+                // Delete doctor
+                $doctor->delete();
+            }
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+            // Log out and delete user
+            Auth::logout();
+            $user->delete();
 
-        return Redirect::to('/');
+            // Invalidate session
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return Redirect::to('/')->with('status', 'account-deleted');
+        } catch (\Exception $e) {
+            // Log error and return back with message
+            \Log::error('Account deletion error: ' . $e->getMessage());
+            return Redirect::route('profile.edit')->with('error', 'Error deleting account: ' . $e->getMessage());
+        }
     }
 }
+

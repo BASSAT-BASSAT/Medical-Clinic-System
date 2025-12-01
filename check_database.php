@@ -4,8 +4,8 @@ use App\Models\Doctor;
 use App\Models\Patient;
 use App\Models\Specialty;
 use App\Models\Appointment;
-use App\Models\MedicalRecord;
 use App\Models\Notification;
+use App\Models\MedicalRecord;
 
 require_once __DIR__ . '/vendor/autoload.php';
 

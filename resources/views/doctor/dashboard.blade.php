@@ -311,13 +311,36 @@ function closeAvailabilityModal() {
 function saveAvailability() {
     const doctorId = {{ Auth::user()->doctor->doctor_id ?? 'null' }};
     const day = document.getElementById('day_of_week').value;
-    const startTime = document.getElementById('start_time').value;
-    const endTime = document.getElementById('end_time').value;
+    let startTime = document.getElementById('start_time').value;
+    let endTime = document.getElementById('end_time').value;
     const isAvailable = document.getElementById('is_available').value === '1';
 
     if (!doctorId) {
         alert('Doctor ID not found. Please refresh the page.');
         return;
+    }
+
+    // Validate time format
+    if (!startTime || !endTime) {
+        alert('Please select both start and end times');
+        return;
+    }
+
+    // Check if times are in reverse (end time is earlier than start time)
+    // This indicates a shift that spans midnight (e.g., 5pm to 1am next day)
+    const [startHours, startMins] = startTime.split(':').map(Number);
+    const [endHours, endMins] = endTime.split(':').map(Number);
+    const startTotalMins = startHours * 60 + startMins;
+    const endTotalMins = endHours * 60 + endMins;
+
+    if (endTotalMins < startTotalMins) {
+        const confirmMsg = `You've entered times in reverse order (${startTime} to ${endTime}).\n\n` +
+            `This will be interpreted as a shift that spans midnight.\n` +
+            `For example: Start at ${startTime} (today) → End at ${endTime} (next day)\n\n` +
+            `Is this correct?`;
+        if (!confirm(confirmMsg)) {
+            return;
+        }
     }
 
     const availabilityData = {

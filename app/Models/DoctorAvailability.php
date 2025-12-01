@@ -12,10 +12,11 @@ class DoctorAvailability extends Model
     protected $primaryKey = 'availability_id';
     public $timestamps = true;
 
-    protected $fillable = ['doctor_id', 'day_of_week', 'start_time', 'end_time', 'is_available'];
+    protected $fillable = ['doctor_id', 'day_of_week', 'start_time', 'end_time', 'is_available', 'is_overnight'];
 
     protected $casts = [
         'is_available' => 'boolean',
+        'is_overnight' => 'boolean',
     ];
 
     public function doctor(): BelongsTo
