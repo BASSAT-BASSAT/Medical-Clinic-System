@@ -25,8 +25,10 @@ class MedicalRecordController extends Controller
         $validated = $request->validate([
             'patient_id' => 'required|exists:patients,patient_id',
             'doctor_id' => 'required|exists:doctors,doctor_id',
-            'appointment_id' => 'required|exists:appointments,appointment_id',
+            'appointment_id' => 'nullable|exists:appointments,appointment_id',
             'record_date' => 'nullable|date_format:Y-m-d H:i:s',
+            'diagnosis' => 'nullable|string|max:500',
+            'prescription' => 'nullable|string',
             'notes' => 'nullable|string',
         ]);
 
@@ -56,6 +58,8 @@ class MedicalRecordController extends Controller
         $record = MedicalRecord::findOrFail($id);
 
         $validated = $request->validate([
+            'diagnosis' => 'sometimes|string|max:500',
+            'prescription' => 'sometimes|string',
             'notes' => 'sometimes|string',
         ]);
 

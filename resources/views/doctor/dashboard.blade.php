@@ -380,20 +380,30 @@
         </div>
         <form id="addRecordForm" onsubmit="submitMedicalRecord(event)" class="p-6 space-y-4">
             <input type="hidden" id="record-patient-id">
+            
+            <!-- Link to Appointment (Optional) -->
+            <div>
+                <label class="block text-gray-700 mb-2">Link to Appointment (Optional)</label>
+                <select id="record-appointment" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">-- No specific appointment --</option>
+                </select>
+                <p class="text-gray-500 text-xs mt-1">Link this record to a completed appointment</p>
+            </div>
+
             <div>
                 <label class="block text-gray-700 mb-2">Diagnosis *</label>
-                <input type="text" id="record-diagnosis" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                <input type="text" id="record-diagnosis" placeholder="e.g., Common cold, Migraine, Hypertension" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
             </div>
             <div>
                 <label class="block text-gray-700 mb-2">Prescription *</label>
-                <textarea id="record-prescription" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required></textarea>
+                <textarea id="record-prescription" rows="3" placeholder="e.g., Paracetamol 500mg - 3 times daily for 5 days" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required></textarea>
             </div>
             <div>
-                <label class="block text-gray-700 mb-2">Notes</label>
-                <textarea id="record-notes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                <label class="block text-gray-700 mb-2">Additional Notes</label>
+                <textarea id="record-notes" rows="3" placeholder="Follow-up in 2 weeks, rest recommended, avoid strenuous activity..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
             </div>
             <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition">
-                Save Record
+                Save Medical Record
             </button>
         </form>
     </div>
@@ -903,6 +913,26 @@ function renderPatientPanel(patientData, records) {
 
 function openAddRecordModal(patientId) {
     document.getElementById('record-patient-id').value = patientId;
+    
+    // Populate appointments dropdown with this patient's completed appointments
+    const patientData = allPatientsList.find(p => p.patient.patient_id === patientId);
+    const appointmentSelect = document.getElementById('record-appointment');
+    
+    // Clear existing options except the first one
+    appointmentSelect.innerHTML = '<option value="">-- No specific appointment --</option>';
+    
+    if (patientData && patientData.visits) {
+        // Filter for completed appointments (most likely to need a record)
+        const completedVisits = patientData.visits.filter(v => v.status === 'completed');
+        completedVisits.forEach(apt => {
+            const date = new Date(apt.start_time);
+            const option = document.createElement('option');
+            option.value = apt.appointment_id;
+            option.textContent = `${date.toLocaleDateString()} - ${apt.reason || 'General Consultation'}`;
+            appointmentSelect.appendChild(option);
+        });
+    }
+    
     document.getElementById('addRecordModal').classList.remove('hidden');
 }
 
@@ -915,6 +945,8 @@ function submitMedicalRecord(event) {
     event.preventDefault();
     
     const patientId = document.getElementById('record-patient-id').value;
+    const appointmentId = document.getElementById('record-appointment').value;
+    
     const data = {
         patient_id: patientId,
         doctor_id: doctorId,
@@ -923,12 +955,20 @@ function submitMedicalRecord(event) {
         notes: document.getElementById('record-notes').value
     };
     
+    // Only include appointment_id if one was selected
+    if (appointmentId) {
+        data.appointment_id = appointmentId;
+    }
+    
     fetch('/api/medical-records', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
     })
-    .then(res => res.json())
+    .then(res => {
+        if (!res.ok) throw new Error('Failed to save record');
+        return res.json();
+    })
     .then(() => {
         showToast('success', 'Success', 'Medical record added successfully!');
         closeAddRecordModal();

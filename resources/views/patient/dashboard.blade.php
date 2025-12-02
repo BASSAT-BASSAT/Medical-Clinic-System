@@ -200,6 +200,97 @@
     </div>
 </div>
 
+<!-- AI Chatbot Widget -->
+<div id="chatbot-widget" class="fixed bottom-6 right-6 z-50">
+    <!-- Chat Toggle Button -->
+    <button id="chat-toggle-btn" onclick="toggleChatbot()" class="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group">
+        <svg id="chat-icon" class="w-8 h-8 text-white transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+        </svg>
+        <svg id="close-icon" class="w-8 h-8 text-white hidden transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+        <span class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></span>
+    </button>
+    
+    <!-- Chat Window -->
+    <div id="chat-window" class="hidden absolute bottom-20 right-0 w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden" style="height: 500px;">
+        <!-- Chat Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-white font-semibold">MediBot</h3>
+                    <p class="text-blue-100 text-sm">AI Medical Assistant</p>
+                </div>
+                <button onclick="resetChat()" class="text-white/70 hover:text-white transition p-1" title="Reset conversation">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Chat Messages -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4" style="height: 340px;">
+            <!-- Welcome Message -->
+            <div class="flex gap-3">
+                <div class="w-8 h-8 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                </div>
+                <div class="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%]">
+                    <p class="text-gray-800 text-sm">Hello! 👋 I'm MediBot, your AI medical assistant. I can help you:</p>
+                    <ul class="text-gray-600 text-sm mt-2 space-y-1">
+                        <li>• Find the right specialist for your symptoms</li>
+                        <li>• Check doctor availability</li>
+                        <li>• Book appointments</li>
+                    </ul>
+                    <p class="text-gray-800 text-sm mt-2">How can I help you today?</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Suggested Questions -->
+        <div id="suggested-questions" class="px-4 pb-2">
+            <div class="flex flex-wrap gap-2">
+                <button onclick="sendSuggestedMessage('I have a headache')" class="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full hover:bg-blue-100 transition">
+                    I have a headache
+                </button>
+                <button onclick="sendSuggestedMessage('I need a general checkup')" class="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full hover:bg-blue-100 transition">
+                    General checkup
+                </button>
+                <button onclick="sendSuggestedMessage('Show available doctors')" class="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full hover:bg-blue-100 transition">
+                    Available doctors
+                </button>
+            </div>
+        </div>
+        
+        <!-- Chat Input -->
+        <div class="border-t border-gray-200 p-4">
+            <form id="chat-form" onsubmit="sendMessage(event)" class="flex gap-2">
+                <input 
+                    type="text" 
+                    id="chat-input" 
+                    placeholder="Describe your symptoms..." 
+                    class="flex-1 px-4 py-2.5 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                    autocomplete="off"
+                >
+                <button type="submit" id="send-btn" class="w-10 h-10 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition flex items-center justify-center disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 const patientId = {{ Auth::user()->patient->patient_id ?? 'null' }};
 let allAppointments = [];
@@ -741,5 +832,243 @@ document.getElementById('bookingForm')?.addEventListener('submit', function(e) {
         showToast('error', 'Error', 'Error booking appointment');
     });
 });
+
+// ==========================================
+// AI CHATBOT FUNCTIONALITY
+// ==========================================
+const CHATBOT_API = 'http://127.0.0.1:5000';
+let chatSessionId = 'session_' + Date.now();
+let isChatbotOpen = false;
+
+function toggleChatbot() {
+    const chatWindow = document.getElementById('chat-window');
+    const chatIcon = document.getElementById('chat-icon');
+    const closeIcon = document.getElementById('close-icon');
+    
+    isChatbotOpen = !isChatbotOpen;
+    
+    if (isChatbotOpen) {
+        chatWindow.classList.remove('hidden');
+        chatIcon.classList.add('hidden');
+        closeIcon.classList.remove('hidden');
+        document.getElementById('chat-input').focus();
+    } else {
+        chatWindow.classList.add('hidden');
+        chatIcon.classList.remove('hidden');
+        closeIcon.classList.add('hidden');
+    }
+}
+
+function sendMessage(e) {
+    e.preventDefault();
+    
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    // Add user message to chat
+    addMessageToChat('user', message);
+    input.value = '';
+    
+    // Hide suggested questions after first message
+    document.getElementById('suggested-questions').classList.add('hidden');
+    
+    // Show typing indicator
+    showTypingIndicator();
+    
+    // Send to chatbot API
+    fetch(`${CHATBOT_API}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            message: message,
+            session_id: chatSessionId,
+            patient_id: patientId
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        hideTypingIndicator();
+        
+        // Add bot response
+        addMessageToChat('bot', data.message);
+        
+        // If doctors were found, show them
+        if (data.available_doctors && data.available_doctors.length > 0) {
+            showDoctorCards(data.available_doctors, data.specialty_detected);
+        }
+    })
+    .catch(err => {
+        hideTypingIndicator();
+        console.error('Chatbot error:', err);
+        
+        // Fallback response when API is unavailable
+        addMessageToChat('bot', "I'm having trouble connecting to my brain right now 🤖. But don't worry! You can still browse our specialties and book an appointment using the \"Book Appointment\" tab above.");
+    });
+}
+
+function sendSuggestedMessage(message) {
+    document.getElementById('chat-input').value = message;
+    sendMessage(new Event('submit'));
+}
+
+function addMessageToChat(sender, message) {
+    const messagesContainer = document.getElementById('chat-messages');
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `flex gap-3 ${sender === 'user' ? 'flex-row-reverse' : ''}`;
+    
+    if (sender === 'user') {
+        messageDiv.innerHTML = `
+            <div class="w-8 h-8 bg-blue-600 rounded-full flex-shrink-0 flex items-center justify-center">
+                <span class="text-white text-sm font-medium">${'{{ Auth::user()->name }}'.charAt(0).toUpperCase()}</span>
+            </div>
+            <div class="bg-blue-600 text-white rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%]">
+                <p class="text-sm">${escapeHtml(message)}</p>
+            </div>
+        `;
+    } else {
+        messageDiv.innerHTML = `
+            <div class="w-8 h-8 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+            </div>
+            <div class="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%]">
+                <p class="text-gray-800 text-sm">${formatBotMessage(message)}</p>
+            </div>
+        `;
+    }
+    
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function showDoctorCards(doctors, specialty) {
+    const messagesContainer = document.getElementById('chat-messages');
+    
+    const doctorsDiv = document.createElement('div');
+    doctorsDiv.className = 'flex gap-3';
+    doctorsDiv.innerHTML = `
+        <div class="w-8 h-8 flex-shrink-0"></div>
+        <div class="flex-1 space-y-2">
+            <p class="text-xs text-gray-500 mb-2">Available ${specialty ? specialty.charAt(0).toUpperCase() + specialty.slice(1) : ''} Doctors:</p>
+            ${doctors.map(doc => `
+                <div class="bg-white border border-gray-200 rounded-xl p-3 hover:shadow-md transition cursor-pointer" onclick="bookFromChat(${doc.id}, '${escapeHtml(doc.name)}')">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-900 text-sm">${escapeHtml(doc.name)}</p>
+                            <p class="text-xs text-gray-500">${escapeHtml(doc.specialty)}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-medium text-blue-600">Book</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    
+    messagesContainer.appendChild(doctorsDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function bookFromChat(doctorId, doctorName) {
+    // Close chatbot
+    toggleChatbot();
+    
+    // Switch to booking tab
+    switchTab('book');
+    
+    // Try to pre-select the doctor (need to load specialty first)
+    showToast('info', 'Booking', `Select the specialty to book with ${doctorName}`);
+}
+
+function showTypingIndicator() {
+    const messagesContainer = document.getElementById('chat-messages');
+    
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'typing-indicator';
+    typingDiv.className = 'flex gap-3';
+    typingDiv.innerHTML = `
+        <div class="w-8 h-8 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+            </svg>
+        </div>
+        <div class="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3">
+            <div class="flex gap-1">
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+            </div>
+        </div>
+    `;
+    
+    messagesContainer.appendChild(typingDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
+}
+
+function resetChat() {
+    // Reset session
+    chatSessionId = 'session_' + Date.now();
+    
+    // Clear messages except welcome
+    const messagesContainer = document.getElementById('chat-messages');
+    messagesContainer.innerHTML = `
+        <div class="flex gap-3">
+            <div class="w-8 h-8 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+            </div>
+            <div class="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%]">
+                <p class="text-gray-800 text-sm">Hello! 👋 I'm MediBot, your AI medical assistant. I can help you:</p>
+                <ul class="text-gray-600 text-sm mt-2 space-y-1">
+                    <li>• Find the right specialist for your symptoms</li>
+                    <li>• Check doctor availability</li>
+                    <li>• Book appointments</li>
+                </ul>
+                <p class="text-gray-800 text-sm mt-2">How can I help you today?</p>
+            </div>
+        </div>
+    `;
+    
+    // Show suggested questions again
+    document.getElementById('suggested-questions').classList.remove('hidden');
+    
+    // Call reset API
+    fetch(`${CHATBOT_API}/reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: chatSessionId })
+    }).catch(() => {});
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatBotMessage(message) {
+    // Convert markdown-like formatting to HTML
+    return escapeHtml(message)
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+}
 </script>
 @endsection

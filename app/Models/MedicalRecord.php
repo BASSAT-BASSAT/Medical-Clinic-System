@@ -11,7 +11,7 @@ class MedicalRecord extends Model
     protected $primaryKey = 'record_id';
     public $timestamps = true;
 
-    protected $fillable = ['patient_id', 'doctor_id', 'appointment_id', 'record_date', 'notes'];
+    protected $fillable = ['patient_id', 'doctor_id', 'appointment_id', 'record_date', 'diagnosis', 'prescription', 'notes'];
 
     protected $casts = [
         'record_date' => 'datetime',

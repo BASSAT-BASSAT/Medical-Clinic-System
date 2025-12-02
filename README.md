@@ -1,22 +1,26 @@
 # 🏥 Medical Clinic Management System
 
-A comprehensive full-stack medical clinic management system built with Laravel, featuring separate dashboards for administrators, doctors, and patients. The system streamlines appointment scheduling, medical records management, and clinic operations.
+A comprehensive full-stack medical clinic management system built with Laravel, featuring separate dashboards for administrators, doctors, and patients. The system includes an **AI-powered chatbot** using Google Gemini to help patients find the right specialists and book appointments.
 
 ![Laravel](https://img.shields.io/badge/Laravel-11.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
 ![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![Google Gemini](https://img.shields.io/badge/Google_Gemini-AI-4285F4?style=for-the-badge&logo=google&logoColor=white)
 
 ---
 
 ## 📋 Table of Contents
 
 - [Features](#-features)
+- [AI Chatbot](#-ai-chatbot)
 - [Screenshots](#-screenshots)
 - [Tech Stack](#-tech-stack)
 - [Requirements](#-requirements)
 - [Installation](#-installation)
 - [Database Setup](#-database-setup)
+- [Chatbot Setup](#-chatbot-setup)
 - [Running the Application](#-running-the-application)
 - [Default Login Credentials](#-default-login-credentials)
 - [Project Structure](#-project-structure)
@@ -48,6 +52,15 @@ A comprehensive full-stack medical clinic management system built with Laravel, 
 - **Medical Records** - Access personal medical history
 - **Real-time Notifications** - Get notified about appointment confirmations and cancellations
 - **Cancel Appointments** - Cancel scheduled appointments with confirmation
+- **🤖 AI Chatbot (MediBot)** - Get help finding the right specialist based on symptoms
+
+### 🤖 AI Chatbot (MediBot)
+- **Symptom Analysis** - Describe symptoms and get specialty recommendations
+- **Doctor Availability** - Ask "Who's available on Tuesday?" and get real answers
+- **Smart Recommendations** - AI suggests the right specialist (Cardiologist, Neurologist, etc.)
+- **Real Doctor Data** - Shows actual doctors from the system with their schedules
+- **Easy Booking** - Click on doctor cards to start booking process
+- **Conversation Memory** - Remembers context within the chat session
 
 ### 🔔 Notification System
 - Real-time toast notifications (success, error, warning, info)
@@ -63,6 +76,8 @@ A comprehensive full-stack medical clinic management system built with Laravel, 
 | **Backend** | Laravel 11.x (PHP 8.2+) |
 | **Frontend** | Blade Templates, Tailwind CSS 3.x |
 | **Database** | MySQL 8.0 / MariaDB |
+| **AI Chatbot** | Python 3.10+, LangChain, Google Gemini API |
+| **Chatbot Server** | Flask with CORS |
 | **Build Tool** | Vite |
 | **Authentication** | Laravel Breeze |
 | **Email** | Laravel Mail (SMTP) |
@@ -77,8 +92,11 @@ Before installation, ensure you have the following installed:
 - **Composer** >= 2.0
 - **Node.js** >= 18.x
 - **npm** >= 9.x
+- **Python** >= 3.10 (for AI Chatbot)
+- **pip** (Python package manager)
 - **MySQL** >= 8.0 or MariaDB >= 10.4
 - **Git**
+- **Google Gemini API Key** (free at https://makersuite.google.com/app/apikey)
 
 ---
 
@@ -154,11 +172,58 @@ php artisan db:seed
 
 ---
 
+## 🤖 Chatbot Setup
+
+The AI chatbot uses Google Gemini API with LangChain. Follow these steps to set it up:
+
+### 1. Get a Gemini API Key
+
+- Go to: https://makersuite.google.com/app/apikey
+- Create a free API key
+
+### 2. Install Python Dependencies
+
+```bash
+cd chatbot
+pip install -r requirements.txt
+```
+
+### 3. Configure Environment
+
+```bash
+# Copy the example env file
+cp .env.example .env
+
+# Edit .env and add your API key
+GOOGLE_API_KEY=your_gemini_api_key_here
+LARAVEL_API_URL=http://127.0.0.1:8000/api
+```
+
+### 4. Run the Chatbot Service
+
+```bash
+python app.py
+```
+
+The chatbot runs on **http://127.0.0.1:5000**
+
+### Chatbot Features
+
+| Feature | Example Query |
+|---------|---------------|
+| Symptom Analysis | "I have chest pain and shortness of breath" |
+| Day Availability | "Who is available on Tuesday?" |
+| Specialty Search | "I need a cardiologist" |
+| General Help | "I need a general checkup" |
+| Today/Tomorrow | "Who can I see today?" |
+
+---
+
 ## ▶️ Running the Application
 
 ### Development Mode
 
-You need to run two terminals simultaneously:
+You need to run **three terminals** simultaneously:
 
 **Terminal 1 - Laravel Server:**
 ```bash
@@ -168,6 +233,12 @@ php artisan serve
 **Terminal 2 - Vite Development Server:**
 ```bash
 npm run dev
+```
+
+**Terminal 3 - AI Chatbot Server:**
+```bash
+cd chatbot
+python app.py
 ```
 
 The application will be available at: **http://localhost:8000**
@@ -180,6 +251,8 @@ For production deployment:
 npm run build
 php artisan serve
 ```
+
+> **Note:** The chatbot is optional. The application works without it, but patients won't have access to the AI assistant feature.
 
 ---
 
@@ -217,6 +290,11 @@ Medical-Clinic-Full-system/
 │   ├── Listeners/              # Event Listeners
 │   ├── Mail/                   # Mailable Classes
 │   └── Services/               # Business Logic Services
+├── chatbot/                    # AI Chatbot Service
+│   ├── app.py                  # Flask chatbot server
+│   ├── requirements.txt        # Python dependencies
+│   ├── .env.example            # Environment template
+│   └── .env                    # API keys (create this)
 ├── database/
 │   ├── migrations/             # Database Migrations
 │   └── seeders/                # Database Seeders
