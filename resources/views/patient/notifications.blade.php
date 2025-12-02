@@ -132,24 +132,27 @@ function displayNotifications(notifications) {
     
     container.innerHTML = notifications.map(notif => {
         const date = new Date(notif.created_at);
+        const notifId = notif.notification_id || notif.id;
         const isUnread = !notif.is_sent;
-        const bgColor = isUnread ? 'bg-blue-50 border-blue-200' : 'bg-white';
         
         let icon = '📧';
         let typeLabel = 'Notification';
-        if (notif.notification_type === 'appointment') {
+        if (notif.notification_type === 'appointment' || notif.notification_type === 'booking_confirmation') {
             icon = '📅';
             typeLabel = 'Appointment';
-        } else if (notif.notification_type === 'reminder') {
+        } else if (notif.notification_type === 'reminder' || notif.notification_type === 'appointment_reminder') {
             icon = '⏰';
             typeLabel = 'Reminder';
-        } else if (notif.notification_type === 'cancellation') {
+        } else if (notif.notification_type === 'cancellation' || notif.notification_type === 'appointment_cancelled') {
             icon = '❌';
             typeLabel = 'Cancellation';
+        } else if (notif.notification_type === 'appointment_completed') {
+            icon = '✅';
+            typeLabel = 'Completed';
         }
         
         return `
-            <div class="bg-white rounded-lg shadow p-6 border-l-4 ${isUnread ? 'border-blue-500' : 'border-gray-200'} hover:shadow-md transition cursor-pointer" onclick="viewNotificationDetail(${notif.id})">
+            <div id="notification-${notifId}" class="bg-white rounded-lg shadow p-6 border-l-4 ${isUnread ? 'border-blue-500' : 'border-gray-200'} hover:shadow-md transition cursor-pointer" onclick="handleNotificationClick(${notifId}, event)">
                 <div class="flex items-start justify-between">
                     <div class="flex-1">
                         <div class="flex items-center gap-2">
@@ -162,10 +165,13 @@ function displayNotifications(notifications) {
                         <p class="text-xs text-gray-500 mt-2">${date.toLocaleString()}</p>
                     </div>
                     <div class="flex items-center gap-3">
-                        ${isUnread ? '<span class="inline-block w-3 h-3 bg-blue-500 rounded-full"></span>' : ''}
-                        <span class="text-xs px-2 py-1 rounded-full ${isUnread ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
+                        <span id="indicator-${notifId}" class="${isUnread ? 'inline-block w-3 h-3 bg-blue-500 rounded-full' : 'hidden'}"></span>
+                        <span id="badge-${notifId}" class="text-xs px-2 py-1 rounded-full ${isUnread ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
                             ${isUnread ? 'Unread' : 'Read'}
                         </span>
+                        <button onclick="viewNotificationDetail(${notifId}); event.stopPropagation();" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            View Details
+                        </button>
                     </div>
                 </div>
             </div>
@@ -173,8 +179,76 @@ function displayNotifications(notifications) {
     }).join('');
 }
 
+function handleNotificationClick(notificationId, event) {
+    // Find the notification
+    const notif = allNotifications.find(n => (n.notification_id || n.id) === notificationId);
+    if (!notif) return;
+    
+    // If already read, just show details
+    if (notif.is_sent) {
+        viewNotificationDetail(notificationId);
+        return;
+    }
+    
+    // Mark as read immediately in the UI
+    const card = document.getElementById(`notification-${notificationId}`);
+    const indicator = document.getElementById(`indicator-${notificationId}`);
+    const badge = document.getElementById(`badge-${notificationId}`);
+    
+    if (card) {
+        card.classList.remove('border-blue-500');
+        card.classList.add('border-gray-200');
+    }
+    if (indicator) {
+        indicator.classList.add('hidden');
+    }
+    if (badge) {
+        badge.classList.remove('bg-blue-100', 'text-blue-800');
+        badge.classList.add('bg-gray-100', 'text-gray-800');
+        badge.textContent = 'Read';
+    }
+    
+    // Update local state
+    notif.is_sent = true;
+    
+    // Update statistics immediately
+    updateStatistics();
+    
+    // Send to server
+    fetch(`/api/notifications/${notificationId}/mark-sent`, {
+        method: 'PATCH',
+        headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    })
+    .then(res => {
+        if (!res.ok) {
+            console.error('Failed to mark notification as read');
+            // Revert UI changes on error
+            notif.is_sent = false;
+            if (card) {
+                card.classList.add('border-blue-500');
+                card.classList.remove('border-gray-200');
+            }
+            if (indicator) {
+                indicator.classList.remove('hidden');
+            }
+            if (badge) {
+                badge.classList.add('bg-blue-100', 'text-blue-800');
+                badge.classList.remove('bg-gray-100', 'text-gray-800');
+                badge.textContent = 'Unread';
+            }
+            updateStatistics();
+        }
+    })
+    .catch(err => {
+        console.error('Error marking notification as read:', err);
+    });
+}
+
 function viewNotificationDetail(notificationId) {
-    const notif = allNotifications.find(n => n.id === notificationId);
+    const notif = allNotifications.find(n => (n.notification_id || n.id) === notificationId);
     if (!notif) return;
     
     const content = document.getElementById('notification-detail-content');
@@ -194,7 +268,7 @@ function viewNotificationDetail(notificationId) {
             </div>
             <div>
                 <h4 class="font-semibold text-gray-900">Status</h4>
-                <p class="text-gray-700">${notif.is_sent ? 'Sent' : 'Pending'}</p>
+                <p class="text-gray-700">${notif.is_sent ? 'Read' : 'Unread'}</p>
             </div>
             <div>
                 <h4 class="font-semibold text-gray-900">Date</h4>
@@ -202,17 +276,12 @@ function viewNotificationDetail(notificationId) {
             </div>
             ${notif.sent_at ? `
             <div>
-                <h4 class="font-semibold text-gray-900">Sent At</h4>
+                <h4 class="font-semibold text-gray-900">Read At</h4>
                 <p class="text-gray-700">${new Date(notif.sent_at).toLocaleString()}</p>
             </div>
             ` : ''}
         </div>
     `;
-    
-    // Mark as read if unread
-    if (!notif.is_sent) {
-        markAsRead(notif.id);
-    }
     
     document.getElementById('notificationDetailModal').classList.remove('hidden');
 }
@@ -221,30 +290,60 @@ function closeNotificationModal() {
     document.getElementById('notificationDetailModal').classList.add('hidden');
 }
 
-function markAsRead(notificationId) {
-    fetch(`/api/notifications/${notificationId}/mark-sent`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' }
-    })
-    .then(() => {
-        loadNotifications();
-    })
-    .catch(err => console.error('Error:', err));
-}
-
 function markAllAsRead() {
     const unreadIds = allNotifications
         .filter(n => !n.is_sent)
-        .map(n => n.id);
+        .map(n => n.notification_id || n.id);
     
+    if (unreadIds.length === 0) {
+        alert('No unread notifications!');
+        return;
+    }
+    
+    // Update UI immediately
+    unreadIds.forEach(id => {
+        const card = document.getElementById(`notification-${id}`);
+        const indicator = document.getElementById(`indicator-${id}`);
+        const badge = document.getElementById(`badge-${id}`);
+        
+        if (card) {
+            card.classList.remove('border-blue-500');
+            card.classList.add('border-gray-200');
+        }
+        if (indicator) {
+            indicator.classList.add('hidden');
+        }
+        if (badge) {
+            badge.classList.remove('bg-blue-100', 'text-blue-800');
+            badge.classList.add('bg-gray-100', 'text-gray-800');
+            badge.textContent = 'Read';
+        }
+        
+        // Update local state
+        const notif = allNotifications.find(n => (n.notification_id || n.id) === id);
+        if (notif) notif.is_sent = true;
+    });
+    
+    updateStatistics();
+    
+    // Send requests to server
     Promise.all(unreadIds.map(id => 
-        fetch(`/api/notifications/${id}/mark-sent`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' } })
+        fetch(`/api/notifications/${id}/mark-sent`, { 
+            method: 'PATCH', 
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            } 
+        })
     ))
     .then(() => {
         alert('All notifications marked as read!');
-        loadNotifications();
     })
-    .catch(err => console.error('Error:', err));
+    .catch(err => {
+        console.error('Error:', err);
+        // Reload on error to get correct state
+        loadNotifications();
+    });
 }
 
 function filterNotifications() {
@@ -254,7 +353,7 @@ function filterNotifications() {
     let filtered = allNotifications;
     
     if (typeFilter) {
-        filtered = filtered.filter(n => n.notification_type === typeFilter);
+        filtered = filtered.filter(n => n.notification_type === typeFilter || n.notification_type.includes(typeFilter));
     }
     
     if (statusFilter === 'unread') {

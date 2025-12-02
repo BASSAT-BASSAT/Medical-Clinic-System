@@ -5,21 +5,50 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+                    <a href="{{ route('dashboard') }}" class="flex items-center">
+                        <span class="text-xl font-bold text-blue-600">🏥 MedClinic</span>
                     </a>
                 </div>
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard') || request()->routeIs('*.dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+
+                    @if(Auth::user()->role === 'patient')
+                        <x-nav-link :href="route('patient.appointments.book')" :active="request()->routeIs('patient.appointments.book')">
+                            {{ __('Book Appointment') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('patient.records')" :active="request()->routeIs('patient.records')">
+                            {{ __('Medical Records') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('patient.notifications')" :active="request()->routeIs('patient.notifications')">
+                            {{ __('Notifications') }}
+                        </x-nav-link>
+                    @endif
+
+                    @if(Auth::user()->role === 'doctor')
+                        <x-nav-link :href="route('doctor.patients')" :active="request()->routeIs('doctor.patients')">
+                            {{ __('My Patients') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('doctor.reports')" :active="request()->routeIs('doctor.reports')">
+                            {{ __('Reports') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
+                <!-- Role Badge -->
+                <span class="px-3 py-1 text-xs font-semibold rounded-full mr-4
+                    @if(Auth::user()->role === 'admin') bg-red-100 text-red-800
+                    @elseif(Auth::user()->role === 'doctor') bg-blue-100 text-blue-800
+                    @else bg-green-100 text-green-800 @endif">
+                    {{ ucfirst(Auth::user()->role) }}
+                </span>
+
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
@@ -70,6 +99,24 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+
+            @if(Auth::user()->role === 'patient')
+                <x-responsive-nav-link :href="route('patient.appointments.book')" :active="request()->routeIs('patient.appointments.book')">
+                    {{ __('Book Appointment') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('patient.records')" :active="request()->routeIs('patient.records')">
+                    {{ __('Medical Records') }}
+                </x-responsive-nav-link>
+            @endif
+
+            @if(Auth::user()->role === 'doctor')
+                <x-responsive-nav-link :href="route('doctor.patients')" :active="request()->routeIs('doctor.patients')">
+                    {{ __('My Patients') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('doctor.reports')" :active="request()->routeIs('doctor.reports')">
+                    {{ __('Reports') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->
@@ -77,6 +124,12 @@
             <div class="px-4">
                 <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
                 <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                <span class="inline-block mt-1 px-2 py-0.5 text-xs font-semibold rounded-full
+                    @if(Auth::user()->role === 'admin') bg-red-100 text-red-800
+                    @elseif(Auth::user()->role === 'doctor') bg-blue-100 text-blue-800
+                    @else bg-green-100 text-green-800 @endif">
+                    {{ ucfirst(Auth::user()->role) }}
+                </span>
             </div>
 
             <div class="mt-3 space-y-1">

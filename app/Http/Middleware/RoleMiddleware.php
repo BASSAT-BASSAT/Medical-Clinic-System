@@ -16,11 +16,26 @@ class RoleMiddleware
     public function handle(Request $request, Closure $next, $role): Response
     {
         if (!auth()->check()) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+            return redirect()->route('login');
         }
 
         if (auth()->user()->role !== $role) {
-            return response()->json(['error' => 'Forbidden - Insufficient permissions'], 403);
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Forbidden - Insufficient permissions'], 403);
+            }
+            // Redirect to appropriate dashboard based on user's actual role
+            $userRole = auth()->user()->role;
+            if ($userRole === 'admin') {
+                return redirect()->route('admin.dashboard');
+            } elseif ($userRole === 'doctor') {
+                return redirect()->route('doctor.dashboard');
+            } elseif ($userRole === 'patient') {
+                return redirect()->route('patient.dashboard');
+            }
+            return redirect()->route('dashboard');
         }
 
         return $next($request);
