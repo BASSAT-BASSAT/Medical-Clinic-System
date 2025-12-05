@@ -157,8 +157,46 @@ class AppointmentController extends Controller
             $appointment = Appointment::create($validated);
             \Log::info('Appointment created', ['id' => $appointment->appointment_id]);
 
-            // For now, skip notifications to avoid errors
-            // Just return the appointment
+            // Load relationships for notification details
+            $appointment->load('patient', 'doctor');
+            $patient = $appointment->patient;
+            $doctor = $appointment->doctor;
+
+            // Create notification for PATIENT (booking confirmation)
+            try {
+                $this->createNotification(
+                    $appointment->appointment_id,
+                    $appointment->patient_id,
+                    $appointment->doctor_id,
+                    'email',
+                    'booking_confirmation',
+                    "Your appointment with Dr. {$doctor->first_name} {$doctor->last_name} has been confirmed for " . 
+                        Carbon::parse($appointment->start_time)->format('M d, Y \a\t h:i A'),
+                    $patient->email
+                );
+            } catch (\Exception $e) {
+                \Log::warning('Failed to create patient booking notification: ' . $e->getMessage());
+            }
+
+            // Create notification for DOCTOR (new appointment booked)
+            try {
+                $doctorEmail = $doctor->user ? $doctor->user->email : $doctor->email;
+                $this->createNotification(
+                    $appointment->appointment_id,
+                    $appointment->patient_id,
+                    $appointment->doctor_id,
+                    'email',
+                    'new_appointment',
+                    "New appointment booked: {$patient->first_name} {$patient->last_name} on " . 
+                        Carbon::parse($appointment->start_time)->format('M d, Y \a\t h:i A') .
+                        ($appointment->reason ? " - Reason: {$appointment->reason}" : ''),
+                    $doctorEmail
+                );
+                \Log::info('Doctor notification created for new appointment', ['doctor_id' => $doctor->doctor_id]);
+            } catch (\Exception $e) {
+                \Log::warning('Failed to create doctor booking notification: ' . $e->getMessage());
+            }
+
             return response()->json($appointment, 201);
         } catch (\Exception $e) {
             \Log::error('Appointment creation error: ' . $e->getMessage());
@@ -214,6 +252,12 @@ class AppointmentController extends Controller
         $appointment->update($validated);
 
         if ($oldStatus !== 'cancelled' && ($validated['status'] ?? null) === 'cancelled') {
+            // Load relationships for notification details
+            $appointment->load('patient', 'doctor');
+            $patient = Patient::findOrFail($appointment->patient_id);
+            $doctor = Doctor::findOrFail($appointment->doctor_id);
+
+            // Create notification for PATIENT (cancellation notice)
             $this->createNotification(
                 $id,
                 $appointment->patient_id,
@@ -221,8 +265,26 @@ class AppointmentController extends Controller
                 'email',
                 'appointment_cancelled',
                 'Your appointment has been cancelled.',
-                Patient::findOrFail($appointment->patient_id)->email
+                $patient->email
             );
+
+            // Create notification for DOCTOR (appointment cancelled)
+            try {
+                $doctorEmail = $doctor->user ? $doctor->user->email : $doctor->email;
+                $this->createNotification(
+                    $id,
+                    $appointment->patient_id,
+                    $appointment->doctor_id,
+                    'email',
+                    'appointment_cancelled',
+                    "Appointment cancelled: {$patient->first_name} {$patient->last_name} - " .
+                        Carbon::parse($appointment->start_time)->format('M d, Y \a\t h:i A'),
+                    $doctorEmail
+                );
+                \Log::info('Doctor notification created for cancelled appointment', ['doctor_id' => $doctor->doctor_id]);
+            } catch (\Exception $e) {
+                \Log::warning('Failed to create doctor cancellation notification: ' . $e->getMessage());
+            }
 
             // Dispatch event to send cancellation email
             AppointmentCancelled::dispatch($appointment);

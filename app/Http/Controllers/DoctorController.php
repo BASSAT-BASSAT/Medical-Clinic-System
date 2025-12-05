@@ -3,8 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Doctor;
+use App\Models\Notification;
 use App\Models\Specialty;
+use App\Models\User;
+use App\Mail\NewAccountSetup;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class DoctorController extends Controller
 {
@@ -55,11 +62,55 @@ class DoctorController extends Controller
             'last_name' => 'required|string|max:100',
             'specialty_id' => 'required|exists:specialties,specialty_id',
             'phone' => 'nullable|string|max:20',
-            'email' => 'required|email|unique:doctors,email',
+            'email' => 'required|email|unique:users,email',
         ]);
 
-        $doctor = Doctor::create($validated);
-        return response()->json($doctor, 201);
+        // Create corresponding User so the doctor can log in
+        $password = Str::random(10);
+        $user = User::create([
+            'name' => $validated['first_name'] . ' ' . $validated['last_name'],
+            'email' => $validated['email'],
+            'password' => $password, // User model has 'hashed' cast, auto-hashes
+            'role' => 'doctor',
+        ]);
+
+        // Attach user_id to doctor record
+        $doctorData = $validated;
+        $doctorData['user_id'] = $user->id;
+
+        $doctor = Doctor::create($doctorData);
+
+        // Send welcome email with credentials
+        try {
+            Mail::to($user->email)->send(new NewAccountSetup($user, $password, 'doctor'));
+            $emailSent = true;
+        } catch (\Exception $e) {
+            Log::error('Failed to send new account email to doctor: ' . $e->getMessage());
+            $emailSent = false;
+        }
+
+        // Create audit notification
+        Notification::create([
+            'doctor_id' => $doctor->doctor_id,
+            'type' => 'account_created',
+            'notification_type' => 'system',
+            'message' => "New doctor account created: Dr. {$validated['first_name']} {$validated['last_name']} ({$validated['email']})",
+            'is_sent' => true,
+            'sent_at' => now(),
+        ]);
+
+        // Log the action
+        Log::info('New doctor account created', [
+            'doctor_id' => $doctor->doctor_id,
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'created_by' => auth()->user()->name ?? 'System',
+        ]);
+
+        return response()->json(array_merge($doctor->toArray(), [
+            'generated_password' => $password,
+            'email_sent' => $emailSent,
+        ]), 201);
     }
 
     /**

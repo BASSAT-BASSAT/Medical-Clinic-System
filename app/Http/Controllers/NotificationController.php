@@ -33,14 +33,25 @@ class NotificationController extends Controller
     }
 
     /**
-     * Get notifications for a doctor
+     * Get notifications for a doctor (only doctor-specific notifications)
      */
     public function doctorNotifications($doctorId)
     {
+        // Get doctor's email to match recipient
+        $doctor = \App\Models\Doctor::with('user')->find($doctorId);
+        $doctorEmail = $doctor?->user?->email ?? $doctor?->email;
+        
+        // Get notifications where recipient matches doctor's email
+        // This ensures we only get notifications actually meant for this doctor
         $notifications = Notification::where('doctor_id', $doctorId)
+            ->where(function($query) use ($doctorEmail) {
+                $query->where('recipient', $doctorEmail)
+                    ->orWhere('recipient', null); // System notifications without recipient
+            })
             ->with('appointment', 'patient')
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->limit(20)
+            ->get();
         
         return response()->json($notifications);
     }
@@ -126,6 +137,42 @@ class NotificationController extends Controller
         
         return response()->json([
             'message' => "Marked $count notifications as sent",
+            'count' => $count,
+        ]);
+    }
+
+    /**
+     * Mark all doctor notifications as read
+     */
+    public function markAllDoctorNotificationsRead($doctorId)
+    {
+        $count = Notification::where('doctor_id', $doctorId)
+            ->where('is_sent', false)
+            ->update([
+                'is_sent' => true,
+                'sent_at' => now(),
+            ]);
+        
+        return response()->json([
+            'message' => "Marked $count notifications as read",
+            'count' => $count,
+        ]);
+    }
+
+    /**
+     * Mark all patient notifications as read
+     */
+    public function markAllPatientNotificationsRead($patientId)
+    {
+        $count = Notification::where('patient_id', $patientId)
+            ->where('is_sent', false)
+            ->update([
+                'is_sent' => true,
+                'sent_at' => now(),
+            ]);
+        
+        return response()->json([
+            'message' => "Marked $count notifications as read",
             'count' => $count,
         ]);
     }

@@ -458,6 +458,86 @@
     </div>
 </div>
 
+<!-- Credentials Modal (shows after creating doctor/patient) -->
+<div id="credentialsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-md w-full overflow-hidden shadow-2xl">
+        <div class="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-white bg-opacity-20 p-2 rounded-full">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-white">Account Created Successfully!</h2>
+                    <p class="text-green-100 text-sm">Login credentials generated</p>
+                </div>
+            </div>
+        </div>
+        <div class="p-6">
+            <div class="mb-4">
+                <p class="text-gray-600 text-sm mb-4">
+                    A new <span id="cred-role" class="font-semibold text-gray-900"></span> account has been created. 
+                    Share these credentials with the user:
+                </p>
+            </div>
+            
+            <div class="space-y-3">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Name</label>
+                    <p id="cred-name" class="text-gray-900 font-medium"></p>
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Email</label>
+                    <div class="flex items-center justify-between">
+                        <p id="cred-email" class="text-gray-900 font-mono"></p>
+                        <button onclick="copyToClipboard('cred-email')" class="text-blue-600 hover:text-blue-800 p-1" title="Copy email">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <label class="block text-xs font-medium text-yellow-700 uppercase tracking-wide mb-1">Temporary Password</label>
+                    <div class="flex items-center justify-between">
+                        <p id="cred-password" class="text-yellow-900 font-mono font-bold text-lg"></p>
+                        <button onclick="copyToClipboard('cred-password')" class="text-yellow-700 hover:text-yellow-900 p-1" title="Copy password">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="email-status" class="mt-4 p-3 rounded-lg text-sm">
+                <!-- Will be populated by JS -->
+            </div>
+            
+            <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p class="text-blue-800 text-sm">
+                    <strong>⚠️ Security Note:</strong> The user should change this password after their first login.
+                </p>
+            </div>
+            
+            <div class="mt-6 flex gap-3">
+                <button onclick="copyAllCredentials()" class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                    Copy All
+                </button>
+                <button onclick="closeCredentialsModal()" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 // Toast Notification System
 function showToast(type, title, message, duration = 4000) {
@@ -488,6 +568,73 @@ function hideToast() {
     const container = document.getElementById('toast-container');
     container.style.animation = 'slideOut 0.3s ease-out';
     setTimeout(() => container.classList.add('hidden'), 250);
+}
+
+// Credentials Modal Functions
+function showCredentialsModal({ role, name, email, password, emailSent }) {
+    document.getElementById('cred-role').textContent = role;
+    document.getElementById('cred-name').textContent = name;
+    document.getElementById('cred-email').textContent = email;
+    document.getElementById('cred-password').textContent = password;
+    
+    // Show email status
+    const emailStatus = document.getElementById('email-status');
+    if (emailSent) {
+        emailStatus.className = 'mt-4 p-3 rounded-lg text-sm bg-green-50 border border-green-200';
+        emailStatus.innerHTML = `
+            <div class="flex items-center gap-2 text-green-800">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+                <span><strong>Email sent!</strong> The user has received their login credentials via email.</span>
+            </div>
+        `;
+    } else {
+        emailStatus.className = 'mt-4 p-3 rounded-lg text-sm bg-orange-50 border border-orange-200';
+        emailStatus.innerHTML = `
+            <div class="flex items-center gap-2 text-orange-800">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <span><strong>Email not sent.</strong> Please share these credentials manually with the user.</span>
+            </div>
+        `;
+    }
+    
+    document.getElementById('credentialsModal').classList.remove('hidden');
+}
+
+function closeCredentialsModal() {
+    document.getElementById('credentialsModal').classList.add('hidden');
+}
+
+function copyToClipboard(elementId) {
+    const text = document.getElementById(elementId).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('success', 'Copied!', 'Text copied to clipboard');
+    }).catch(() => {
+        showToast('error', 'Error', 'Failed to copy to clipboard');
+    });
+}
+
+function copyAllCredentials() {
+    const email = document.getElementById('cred-email').textContent;
+    const password = document.getElementById('cred-password').textContent;
+    const name = document.getElementById('cred-name').textContent;
+    
+    const text = `MediCare Login Credentials
+Name: ${name}
+Email: ${email}
+Temporary Password: ${password}
+
+Please change your password after first login.
+Login at: ${window.location.origin}/login`;
+    
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('success', 'Copied!', 'All credentials copied to clipboard');
+    }).catch(() => {
+        showToast('error', 'Error', 'Failed to copy to clipboard');
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -672,10 +819,22 @@ document.getElementById('doctorForm')?.addEventListener('submit', function(e) {
         body: JSON.stringify(data)
     })
     .then(res => res.json())
-    .then(() => {
-        showToast('success', 'Success', 'Doctor added successfully!');
+    .then((result) => {
         closeDoctorModal();
         loadDoctors();
+        
+        // Show credentials modal with generated password
+        if (result.generated_password) {
+            showCredentialsModal({
+                role: 'Doctor',
+                name: `Dr. ${data.first_name} ${data.last_name}`,
+                email: data.email,
+                password: result.generated_password,
+                emailSent: result.email_sent
+            });
+        } else {
+            showToast('success', 'Success', 'Doctor added successfully!');
+        }
     })
     .catch(err => {
         console.error('Error:', err);
@@ -698,10 +857,22 @@ document.getElementById('patientForm')?.addEventListener('submit', function(e) {
         body: JSON.stringify(data)
     })
     .then(res => res.json())
-    .then(() => {
-        showToast('success', 'Success', 'Patient added successfully!');
+    .then((result) => {
         closePatientModal();
         loadPatients();
+        
+        // Show credentials modal with generated password
+        if (result.generated_password) {
+            showCredentialsModal({
+                role: 'Patient',
+                name: `${data.first_name} ${data.last_name}`,
+                email: data.email,
+                password: result.generated_password,
+                emailSent: result.email_sent
+            });
+        } else {
+            showToast('success', 'Success', 'Patient added successfully!');
+        }
     })
     .catch(err => {
         console.error('Error:', err);

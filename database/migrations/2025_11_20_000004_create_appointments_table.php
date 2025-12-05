@@ -1,8 +1,8 @@
 \<?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('patient_id')->constrained('patients', 'patient_id');
             $table->foreignId('doctor_id')->constrained('doctors', 'doctor_id');
             $table->timestamp('start_time');
-            $table->timestamp('end_time');
+            $table->timestamp('end_time')->nullable();
             $table->string('status', 20)->default('scheduled');
             $table->string('reason', 255)->nullable();
             $table->timestamps();

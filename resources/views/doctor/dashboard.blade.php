@@ -18,6 +18,40 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
+                    <!-- Notifications Dropdown -->
+                    <div class="relative" id="notification-dropdown">
+                        <button onclick="toggleNotifications()" class="relative p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                            <span id="notification-badge" class="hidden absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                        </button>
+                        
+                        <!-- Notification Panel -->
+                        <div id="notification-panel" class="hidden absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[500px] flex flex-col">
+                            <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                                <h3 class="font-semibold text-gray-900">Notifications</h3>
+                                <button onclick="markAllNotificationsRead()" class="text-sm text-blue-600 hover:text-blue-700 transition">
+                                    Mark all as read
+                                </button>
+                            </div>
+                            <div id="notification-list" class="overflow-y-auto flex-1 max-h-80">
+                                <div class="text-center py-8">
+                                    <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                                    </svg>
+                                    <p class="text-gray-500">No notifications</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        Profile
+                    </a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition">
@@ -1110,5 +1144,151 @@ function markComplete(appointmentId) {
         });
     });
 }
+
+// ========== NOTIFICATIONS ==========
+let notificationsOpen = false;
+
+function toggleNotifications() {
+    const panel = document.getElementById('notification-panel');
+    notificationsOpen = !notificationsOpen;
+    panel.classList.toggle('hidden', !notificationsOpen);
+    if (notificationsOpen) {
+        loadNotifications();
+    }
+}
+
+// Close notifications when clicking outside
+document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('notification-dropdown');
+    if (dropdown && !dropdown.contains(e.target)) {
+        document.getElementById('notification-panel').classList.add('hidden');
+        notificationsOpen = false;
+    }
+});
+
+function loadNotifications() {
+    fetch(`/api/doctors/${doctorId}/notifications`)
+        .then(res => res.json())
+        .then(notifications => {
+            renderNotifications(notifications);
+        })
+        .catch(err => {
+            console.error('Error loading notifications:', err);
+        });
+}
+
+function renderNotifications(notifications) {
+    const list = document.getElementById('notification-list');
+    const badge = document.getElementById('notification-badge');
+    
+    // Filter unread notifications for badge
+    const unreadCount = notifications.filter(n => !n.is_sent).length;
+    
+    if (unreadCount > 0) {
+        badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+    
+    if (!notifications || notifications.length === 0) {
+        list.innerHTML = `
+            <div class="text-center py-8">
+                <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                </svg>
+                <p class="text-gray-500">No notifications</p>
+            </div>
+        `;
+        return;
+    }
+    
+    list.innerHTML = notifications.map(notification => {
+        const isUnread = !notification.is_sent;
+        const icon = getNotificationIcon(notification.notification_type);
+        const timeAgo = formatTimeAgo(notification.created_at);
+        
+        return `
+            <div class="px-4 py-3 border-b border-gray-100 hover:bg-gray-50 ${isUnread ? 'bg-blue-50' : ''}" onclick="markNotificationRead(${notification.notification_id})">
+                <div class="flex gap-3">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${icon.bgColor}">
+                        ${icon.svg}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm ${isUnread ? 'font-semibold' : ''} text-gray-900">${notification.message}</p>
+                        <p class="text-xs text-gray-500 mt-1">${timeAgo}</p>
+                    </div>
+                    ${isUnread ? '<div class="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>' : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getNotificationIcon(type) {
+    switch(type) {
+        case 'new_appointment':
+            return {
+                bgColor: 'bg-green-100',
+                svg: '<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>'
+            };
+        case 'appointment_cancelled':
+            return {
+                bgColor: 'bg-red-100',
+                svg: '<svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>'
+            };
+        case 'appointment_completed':
+            return {
+                bgColor: 'bg-purple-100',
+                svg: '<svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+            };
+        default:
+            return {
+                bgColor: 'bg-blue-100',
+                svg: '<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>'
+            };
+    }
+}
+
+function formatTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+    
+    if (seconds < 60) return 'Just now';
+    if (seconds < 3600) return Math.floor(seconds / 60) + ' minutes ago';
+    if (seconds < 86400) return Math.floor(seconds / 3600) + ' hours ago';
+    if (seconds < 604800) return Math.floor(seconds / 86400) + ' days ago';
+    return date.toLocaleDateString();
+}
+
+function markNotificationRead(notificationId) {
+    fetch(`/api/notifications/${notificationId}/mark-read`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(() => loadNotifications())
+    .catch(err => console.error('Error:', err));
+}
+
+function markAllNotificationsRead() {
+    fetch(`/api/doctors/${doctorId}/notifications/mark-all-read`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(() => {
+        loadNotifications();
+        showToast('success', 'Done', 'All notifications marked as read');
+    })
+    .catch(err => console.error('Error:', err));
+}
+
+// Load notifications on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial load for badge count
+    loadNotifications();
+    // Refresh notifications every 30 seconds
+    setInterval(loadNotifications, 30000);
+});
 </script>
 @endsection

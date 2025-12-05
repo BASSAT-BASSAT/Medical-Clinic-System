@@ -47,7 +47,7 @@ class RegisteredUserController extends Controller
         $user = User::create([
             'name' => $validated['first_name'] . ' ' . $validated['last_name'],
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => $request->password, // User model has 'hashed' cast, auto-hashes
             'role' => $validated['role'],
         ]);
 

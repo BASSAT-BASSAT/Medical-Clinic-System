@@ -63,12 +63,17 @@ Route::middleware('api')->group(function () {
     Route::get('notifications', [NotificationController::class, 'index']);
     Route::get('notifications/patient/{patientId}', [NotificationController::class, 'patientNotifications']);
     Route::get('notifications/doctor/{doctorId}', [NotificationController::class, 'doctorNotifications']);
+    Route::get('doctors/{doctorId}/notifications', [NotificationController::class, 'doctorNotifications']);
+    Route::get('patients/{patientId}/notifications', [NotificationController::class, 'patientNotifications']);
     Route::get('notifications/unsent', [NotificationController::class, 'unsent']);
     Route::get('notifications/appointment/{appointmentId}', [NotificationController::class, 'byAppointment']);
     Route::post('notifications', [NotificationController::class, 'store']);
     Route::put('notifications/{id}/mark-sent', [NotificationController::class, 'markAsSent']);
+    Route::put('notifications/{id}/mark-read', [NotificationController::class, 'markAsSent']);
     Route::patch('notifications/{id}/mark-sent', [NotificationController::class, 'markAsSent']);
     Route::put('notifications/mark-all-sent', [NotificationController::class, 'markAllAsSent']);
+    Route::put('doctors/{doctorId}/notifications/mark-all-read', [NotificationController::class, 'markAllDoctorNotificationsRead']);
+    Route::put('patients/{patientId}/notifications/mark-all-read', [NotificationController::class, 'markAllPatientNotificationsRead']);
     Route::delete('notifications/{id}', [NotificationController::class, 'destroy']);
 
     // Reports

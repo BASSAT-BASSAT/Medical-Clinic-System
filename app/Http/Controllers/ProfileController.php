@@ -54,8 +54,9 @@ class ProfileController extends Controller
             'password' => ['required', Password::defaults(), 'confirmed'],
         ]);
 
+        // Don't use Hash::make() - User model has 'password' => 'hashed' cast
         $request->user()->update([
-            'password' => Hash::make($validated['password']),
+            'password' => $validated['password'],
         ]);
 
         return Redirect::route('profile.edit')->with('status', 'password-updated');

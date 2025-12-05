@@ -2,8 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use App\Models\Patient;
+use App\Models\User;
+use App\Mail\NewAccountSetup;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class PatientController extends Controller
 {
@@ -43,11 +50,62 @@ class PatientController extends Controller
             'last_name' => 'required|string|max:100',
             'dob' => 'nullable|date',
             'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|unique:patients,email',
+            'email' => 'nullable|email|unique:users,email',
         ]);
 
+        $generatedPassword = null;
+        $emailSent = false;
+        $user = null;
+
+        // If email provided, create a user so the patient can log in
+        if (!empty($validated['email'])) {
+            $generatedPassword = Str::random(10);
+            $user = User::create([
+                'name' => $validated['first_name'] . ' ' . $validated['last_name'],
+                'email' => $validated['email'],
+                'password' => $generatedPassword, // User model has 'hashed' cast, auto-hashes
+                'role' => 'patient',
+            ]);
+
+            $validated['user_id'] = $user->id;
+
+            // Send welcome email with credentials
+            try {
+                Mail::to($user->email)->send(new NewAccountSetup($user, $generatedPassword, 'patient'));
+                $emailSent = true;
+            } catch (\Exception $e) {
+                Log::error('Failed to send new account email to patient: ' . $e->getMessage());
+                $emailSent = false;
+            }
+        }
+
         $patient = Patient::create($validated);
-        return response()->json($patient, 201);
+
+        // Create audit notification
+        Notification::create([
+            'patient_id' => $patient->patient_id,
+            'type' => 'account_created',
+            'notification_type' => 'system',
+            'message' => "New patient account created: {$validated['first_name']} {$validated['last_name']}" . ($validated['email'] ? " ({$validated['email']})" : ''),
+            'is_sent' => true,
+            'sent_at' => now(),
+        ]);
+
+        // Log the action
+        Log::info('New patient account created', [
+            'patient_id' => $patient->patient_id,
+            'user_id' => $user?->id,
+            'email' => $validated['email'] ?? 'none',
+            'created_by' => auth()->user()->name ?? 'System',
+        ]);
+
+        $response = $patient->toArray();
+        if ($generatedPassword) {
+            $response['generated_password'] = $generatedPassword;
+            $response['email_sent'] = $emailSent;
+        }
+
+        return response()->json($response, 201);
     }
 
     /**
