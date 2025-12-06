@@ -22,3 +22,9 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Development/Test files (not for production)
+check_*.php
+test_*.php
+verify_*.php
+*_CHECKLIST.sh

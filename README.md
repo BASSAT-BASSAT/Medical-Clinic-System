@@ -272,32 +272,41 @@ After seeding the database, use these credentials to log in:
 
 ```
 Medical-Clinic-Full-system/
-├── app/
+├── app/                        # Application Core
 │   ├── Http/
 │   │   ├── Controllers/        # API & Web Controllers
 │   │   ├── Middleware/         # Authentication & Role Middleware
 │   │   └── Requests/           # Form Request Validation
 │   ├── Models/                 # Eloquent Models
-│   │   ├── User.php
-│   │   ├── Doctor.php
-│   │   ├── Patient.php
-│   │   ├── Appointment.php
-│   │   ├── MedicalRecord.php
-│   │   ├── Specialty.php
-│   │   ├── DoctorAvailability.php
-│   │   └── Notification.php
+│   │   ├── User.php           # Base User Model
+│   │   ├── Doctor.php         # Doctor Information
+│   │   ├── Patient.php        # Patient Records
+│   │   ├── Appointment.php    # Appointment Bookings
+│   │   ├── MedicalRecord.php  # Patient Medical History
+│   │   ├── Specialty.php      # Medical Specialties
+│   │   ├── DoctorAvailability.php  # Doctor Schedules
+│   │   └── Notification.php   # System Notifications
 │   ├── Events/                 # Application Events
 │   ├── Listeners/              # Event Listeners
-│   ├── Mail/                   # Mailable Classes
+│   ├── Mail/                   # Email Templates
 │   └── Services/               # Business Logic Services
+│
 ├── chatbot/                    # AI Chatbot Service
 │   ├── app.py                  # Flask chatbot server
 │   ├── requirements.txt        # Python dependencies
 │   ├── .env.example            # Environment template
 │   └── .env                    # API keys (create this)
+│
 ├── database/
-│   ├── migrations/             # Database Migrations
-│   └── seeders/                # Database Seeders
+│   ├── migrations/             # Database Schema
+│   └── seeders/                # Sample Data
+│
+├── docs/                       # Documentation
+│   ├── API_EXAMPLES.php        # API Usage Examples
+│   ├── BACKEND_PRESENTATION.md # Backend Architecture Guide
+│   ├── ERD.jpg                 # Database Schema Diagram
+│   └── README.md               # Documentation Index
+│
 ├── resources/
 │   ├── views/
 │   │   ├── admin/              # Admin Dashboard Views
@@ -305,12 +314,22 @@ Medical-Clinic-Full-system/
 │   │   ├── patient/            # Patient Dashboard Views
 │   │   ├── layouts/            # Layout Templates
 │   │   └── auth/               # Authentication Views
-│   ├── css/                    # Stylesheets
-│   └── js/                     # JavaScript Files
+│   ├── css/                    # Tailwind Styles
+│   └── js/                     # Frontend JavaScript
+│
 ├── routes/
 │   ├── web.php                 # Web Routes
-│   └── api.php                 # API Routes
+│   ├── api.php                 # RESTful API Routes
+│   ├── auth.php                # Authentication Routes
+│   └── console.php             # Artisan Commands
+│
+├── tests/                      # Unit & Feature Tests
+│   ├── Feature/                # Feature Tests
+│   └── Unit/                   # Unit Tests
+│
 └── public/                     # Public Assets
+    ├── index.php               # Application Entry Point
+    └── build/                  # Compiled Assets (Vite)
 ```
 
 ---
@@ -438,6 +457,14 @@ php artisan config:clear
 php artisan cache:clear
 php artisan view:clear
 ```
+
+---
+
+## 📚 Additional Documentation
+
+- **[API Documentation](docs/API_EXAMPLES.php)** - Complete API endpoint examples and usage
+- **[Backend Architecture](docs/BACKEND_PRESENTATION.md)** - Detailed backend implementation guide
+- **[Database Schema](docs/ERD.jpg)** - Entity Relationship Diagram
 
 ---
 
