@@ -464,7 +464,8 @@ php artisan view:clear
 
 - **[API Documentation](docs/API_EXAMPLES.php)** - Complete API endpoint examples and usage
 - **[Backend Architecture](docs/BACKEND_PRESENTATION.md)** - Detailed backend implementation guide
-- **[Database Schema](docs/ERD.jpg)** - Entity Relationship Diagram
+- **[Database Schema (ERD)](docs/ERD.jpg)** - Entity Relationship Diagram
+- **[Use Case Diagram](docs/UseCaseDiagram.png)** - System use cases and actor interactions
 
 ---
 
