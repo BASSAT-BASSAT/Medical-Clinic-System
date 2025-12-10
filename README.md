@@ -477,7 +477,14 @@ This project is open-sourced software licensed under the [MIT license](https://o
 
 ## 👥 Contributors
 
-- **BASSAT-BASSAT** - Project Owner
+- **Rokayya Aly** 
+- **Jodie Abdelrahman** 
+- **Maya Hazem** 
+- **Sarah Ali** 
+- **Malak Mohab** 
+- **Mohamed ELbassat** 
+- **Karim Nabil** 
+- **Kirolos Kamil** 
 
 ---
 
